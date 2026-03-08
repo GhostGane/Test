@@ -112,7 +112,8 @@
       gap: 0;
       align-items: center;
       justify-content: center;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      width: 100%;
     }
 
     .unit {
@@ -123,13 +124,13 @@
     }
 
     .unit:not(:last-child) {
-      margin-right: clamp(1.5rem, 3.5vw, 3rem);
+      margin-right: 3.5vw;
     }
 
     .unit:not(:last-child) .number-box::after {
       content: ':';
       font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(2.5rem, 7vw, 5.5rem);
+      font-size: 7vw;
       color: var(--muted);
       position: absolute;
       left: 100%;
@@ -142,10 +143,12 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: clamp(0.8rem, 2vw, 1.4rem) clamp(1rem, 2.5vw, 2rem);
+      padding: 2vw 2.5vw;
       position: relative;
       overflow: visible;
-      min-width: clamp(70px, 15vw, 130px);
+      min-width: 0;
+      width: 18vw;
+      text-align: center;
     }
 
     .number-box::before {
@@ -161,12 +164,20 @@
 
     .number {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(2.8rem, 7vw, 5.5rem);
+      font-size: 10vw;
       line-height: 1;
       color: var(--accent);
       display: block;
       transition: transform 0.15s ease;
       text-shadow: 0 0 30px rgba(200,200,200,0.2);
+    }
+
+    .unit-label {
+      font-size: 1.8vw;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 0.7rem;
     }
 
     .number.flip {
@@ -176,14 +187,6 @@
     @keyframes flip {
       0% { transform: translateY(-6px); opacity: 0.4; }
       100% { transform: translateY(0); opacity: 1; }
-    }
-
-    .unit-label {
-      font-size: 0.6rem;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-top: 0.7rem;
     }
 
     .divider {
