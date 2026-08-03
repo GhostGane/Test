@@ -1,6 +1,11 @@
-<html lang="en"><head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Clock Tracker">
 <title>Earnings</title>
 <style>
   * { box-sizing: border-box; }
@@ -88,11 +93,11 @@
 <body>
 
 <div class="card">
-  <button id="clockBtn" class="">Clock in</button>
+  <button id="clockBtn">Clock in</button>
 
   <div class="stats">
     <p class="stat-label">Earned</p>
-    <p class="stat-value" id="moneyOut">$0.01</p>
+    <p class="stat-value" id="moneyOut">$0.00</p>
     <p class="rate-note">$13.50 / hour</p>
     <p class="rate-note" id="hoursOut">0.00 hours worked</p>
   </div>
@@ -104,56 +109,107 @@
   const RATE = 13.50;
   const SS_RATE = 0.062;
   const MEDICARE_RATE = 0.014;
+  const STORAGE_KEY = 'clockTrackerState';
   const btn = document.getElementById('clockBtn');
   const moneyOut = document.getElementById('moneyOut');
   const hoursOut = document.getElementById('hoursOut');
   const resetBtn = document.getElementById('resetBtn');
 
-  let startTime = null;
-  let intervalId = null;
+  let startTime = null;      // timestamp (ms) of current clock-in, or null if not running
   let elapsedBeforePause = 0; // seconds accumulated from previous sessions this "shift"
+  let intervalId = null;
 
-  function tick() {
-    const elapsedSeconds = elapsedBeforePause + (Date.now() - startTime) / 1000;
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      startTime,
+      elapsedBeforePause
+    }));
+  }
+
+  function loadState() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (saved) {
+        startTime = saved.startTime;
+        elapsedBeforePause = saved.elapsedBeforePause || 0;
+      }
+    } catch (e) {
+      // no valid saved state
+    }
+  }
+
+  function currentElapsedSeconds() {
+    if (startTime) {
+      return elapsedBeforePause + (Date.now() - startTime) / 1000;
+    }
+    return elapsedBeforePause;
+  }
+
+  function render() {
+    const elapsedSeconds = currentElapsedSeconds();
     const gross = (elapsedSeconds / 3600) * RATE;
     const net = gross * (1 - SS_RATE - MEDICARE_RATE);
     moneyOut.textContent = '$' + net.toFixed(2);
     hoursOut.textContent = (elapsedSeconds / 3600).toFixed(2) + ' hours worked';
+    updateResetVisibility();
   }
 
   function updateResetVisibility() {
     const earned = parseFloat(moneyOut.textContent.replace('$', ''));
-    resetBtn.disabled = !!intervalId || earned === 0;
+    resetBtn.disabled = !!startTime || earned === 0;
+  }
+
+  function startTicking() {
+    clearInterval(intervalId);
+    intervalId = setInterval(render, 250);
+  }
+
+  function stopTicking() {
+    clearInterval(intervalId);
+    intervalId = null;
   }
 
   btn.addEventListener('click', () => {
-    if (!intervalId) {
+    if (!startTime) {
       // Clock in
       startTime = Date.now();
-      intervalId = setInterval(tick, 250);
       btn.textContent = 'Clock out';
       btn.classList.add('active');
+      startTicking();
     } else {
       // Clock out
-      elapsedBeforePause += (Date.now() - startTime) / 1000;
-      clearInterval(intervalId);
-      intervalId = null;
+      elapsedBeforePause = currentElapsedSeconds();
+      startTime = null;
       btn.textContent = 'Clock in';
       btn.classList.remove('active');
+      stopTicking();
     }
-    updateResetVisibility();
+    saveState();
+    render();
   });
 
   resetBtn.addEventListener('click', () => {
     elapsedBeforePause = 0;
-    moneyOut.textContent = '$0.00';
-    hoursOut.textContent = '0.00 hours worked';
-    updateResetVisibility();
+    saveState();
+    render();
   });
 
-  updateResetVisibility();
+  // Recompute immediately whenever the tab/app becomes visible again,
+  // in case background timers were paused by the OS.
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) render();
+  });
+  window.addEventListener('pageshow', render);
+
+  // Restore any in-progress or paused session on load
+  loadState();
+  if (startTime) {
+    btn.textContent = 'Clock out';
+    btn.classList.add('active');
+    startTicking();
+  }
+  render();
 </script>
 
-
-
-</body></html>
+</body>
+</html>
