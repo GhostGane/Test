@@ -1,369 +1,159 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Countdown</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%230a0a0f' stroke='%23cccccc' stroke-width='2'/><line x1='16' y1='16' x2='16' y2='6' stroke='%23cccccc' stroke-width='2' stroke-linecap='round'/><line x1='16' y1='16' x2='22' y2='20' stroke='%23cccccc' stroke-width='2' stroke-linecap='round'/><circle cx='16' cy='16' r='1.5' fill='%23cccccc'/></svg>"/>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Earnings</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f4f4f2;
+    color: #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+  }
+  .card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 32px 28px;
+    max-width: 380px;
+    width: 100%;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+  #clockBtn {
+    width: 100%;
+    padding: 16px;
+    font-size: 17px;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    background: #1a1a1a;
+    color: #fff;
+    cursor: pointer;
+    margin-bottom: 24px;
+    transition: background 0.15s, transform 0.1s;
+  }
+  #clockBtn:hover { background: #333; }
+  #clockBtn:active { transform: scale(0.98); }
+  #clockBtn.active { background: #b3261e; }
+  #clockBtn.active:hover { background: #931f19; }
 
-    :root {
-      --bg: #0a0a0f;
-      --surface: #111118;
-      --accent: #cccccc;
-      --accent2: #ff6b35;
-      --text: #f0f0f0;
-      --muted: #555566;
-      --border: #1e1e2e;
-    }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'DM Mono', monospace;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      position: relative;
-    }
-
-    /* Animated background grid */
-    body::before {
-      content: '';
-      position: fixed;
-      top: -60px;
-      left: -60px;
-      width: calc(100% + 120px);
-      height: calc(100% + 120px);
-      background-image:
-        linear-gradient(rgba(200,200,200,0.08) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(200,200,200,0.08) 1px, transparent 1px);
-      background-size: 60px 60px;
-      animation: gridScroll 20s linear infinite;
-      pointer-events: none;
-    }
-
-    @keyframes gridScroll {
-      0% { transform: translate(0, 0); }
-      100% { transform: translate(60px, 60px); }
-    }
-
-    /* Glow orb */
-    body::after {
-      content: '';
-      position: fixed;
-      width: 90vw;
-      height: 90vw;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(200,200,200,0.18) 0%, rgba(200,200,200,0.06) 40%, transparent 70%);
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
-      50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
-    }
-
-    .wrapper {
-      position: relative;
-      z-index: 1;
-      text-align: center;
-      padding: 2rem;
-    }
-
-    .label-top {
-      font-family: 'DM Mono', monospace;
-      font-size: 0.7rem;
-      letter-spacing: 0.4em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 1.2rem;
-      animation: fadeIn 1s ease forwards;
-    }
-
-    .title {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(3rem, 8vw, 6rem);
-      letter-spacing: 0.08em;
-      line-height: 1;
-      color: var(--text);
-      margin-bottom: 0.3rem;
-      animation: slideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-
-    .target-date {
-      font-size: 0.75rem;
-      letter-spacing: 0.25em;
-      color: var(--accent);
-      margin-bottom: 3.5rem;
-      animation: fadeIn 1.2s ease forwards;
-    }
-
-    .countdown {
-      display: flex;
-      gap: 0;
-      align-items: center;
-      justify-content: center;
-      flex-wrap: nowrap;
-      width: 100%;
-    }
-
-    .unit {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      position: relative;
-    }
-
-    .unit:not(:last-child) {
-      margin-right: 3.5vw;
-    }
-
-    .unit:not(:last-child) .number-box::after {
-      content: ':';
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 7vw;
-      color: var(--muted);
-      position: absolute;
-      left: 100%;
-      top: 50%;
-      transform: translate(50%, -50%);
-      line-height: 1;
-    }
-
-    .number-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 2vw 2.5vw;
-      position: relative;
-      overflow: visible;
-      min-width: 0;
-      width: 18vw;
-      text-align: center;
-    }
-
-    .number-box::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, #cccccc, transparent);
-      opacity: 0.6;
-      border-radius: 8px 8px 0 0;
-      overflow: hidden;
-    }
-
-    .number {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 10vw;
-      line-height: 1;
-      color: var(--accent);
-      display: block;
-      text-align: center;
-      width: 100%;
-      transition: transform 0.15s ease;
-      text-shadow: 0 0 30px rgba(200,200,200,0.2);
-    }
-
-    .unit-label {
-      font-size: 1.8vw;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-top: 0.7rem;
-    }
-
-    .number.flip {
-      animation: flip 0.2s ease;
-    }
-
-    /* Desktop: scale down to fixed comfortable size */
-    @media (min-width: 768px) {
-      .unit:not(:last-child) {
-        margin-right: 1.4rem;
-      }
-
-      .unit:not(:last-child) .number-box::after {
-        font-size: 3rem;
-      }
-
-      .number-box {
-        padding: 1rem 1.4rem;
-        width: 90px;
-      }
-
-      .number {
-        font-size: 4.5rem;
-      }
-
-      .unit-label {
-        font-size: 0.6rem;
-      }
-
-      body::after {
-        width: 500px;
-        height: 500px;
-      }
-    }
-
-    @keyframes flip {
-      0% { transform: translateY(-6px); opacity: 0.4; }
-      100% { transform: translateY(0); opacity: 1; }
-    }
-
-    .divider {
-      width: 80px;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--muted), transparent);
-      margin: 3rem auto 1.5rem;
-      animation: fadeIn 1.5s ease forwards;
-    }
-
-    .footer-text {
-      font-size: 0.65rem;
-      letter-spacing: 0.2em;
-      color: var(--muted);
-      animation: fadeIn 1.5s ease forwards;
-    }
-
-    .footer-text span {
-      color: var(--accent2);
-    }
-
-    .expired-msg {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(2rem, 6vw, 4rem);
-      color: var(--accent);
-      letter-spacing: 0.1em;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .unit { animation: fadeIn 0.8s ease forwards; }
-    .unit:nth-child(1) { animation-delay: 0.1s; opacity: 0; }
-    .unit:nth-child(2) { animation-delay: 0.2s; opacity: 0; }
-    .unit:nth-child(3) { animation-delay: 0.3s; opacity: 0; }
-    .unit:nth-child(4) { animation-delay: 0.4s; opacity: 0; }
-
-    /* Desktop scaling — cap vw-based sizes on wider screens */
-    @media (min-width: 768px) and (pointer: fine) {
-      .number-box {
-        width: 10vw;
-        padding: 1.2vw 1.5vw;
-      }
-      .number {
-        font-size: 5.5vw;
-      }
-      .unit:not(:last-child) .number-box::after {
-        font-size: 4vw;
-      }
-      .unit:not(:last-child) {
-        margin-right: 2vw;
-      }
-      .unit-label {
-        font-size: 0.9vw;
-      }
-      body::after {
-        width: 50vw;
-        height: 50vw;
-      }
-    }
-  </style>
+  .stats {
+    background: #f4f4f2;
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .stat-label {
+    font-size: 13px;
+    color: #666;
+    margin: 0 0 6px;
+  }
+  .stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .rate-note {
+    font-size: 12px;
+    color: #999;
+    margin: 6px 0 0;
+  }
+  #resetBtn {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background: #fff;
+    color: #666;
+    cursor: pointer;
+    margin-top: 16px;
+    transition: background 0.15s, transform 0.1s, opacity 0.15s;
+  }
+  #resetBtn:hover { background: #f4f4f2; }
+  #resetBtn:active { transform: scale(0.98); }
+  #resetBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  #resetBtn:disabled:hover { background: #fff; }
+</style>
 </head>
 <body>
-  <div class="wrapper">
-    <div class="countdown" id="countdown">
-      <div class="unit">
-        <div class="number-box">
-          <span class="number" id="days">00</span>
-        </div>
-        <span class="unit-label">Days</span>
-      </div>
-      <div class="unit">
-        <div class="number-box">
-          <span class="number" id="hours">00</span>
-        </div>
-        <span class="unit-label">Hours</span>
-      </div>
-      <div class="unit">
-        <div class="number-box">
-          <span class="number" id="minutes">00</span>
-        </div>
-        <span class="unit-label">Minutes</span>
-      </div>
-      <div class="unit">
-        <div class="number-box">
-          <span class="number" id="seconds">00</span>
-        </div>
-        <span class="unit-label">Seconds</span>
-      </div>
-    </div>
 
+<div class="card">
+  <button id="clockBtn" class="">Clock in</button>
 
+  <div class="stats">
+    <p class="stat-label">Earned</p>
+    <p class="stat-value" id="moneyOut">$0.01</p>
+    <p class="rate-note">$13.50 / hour</p>
+    <p class="rate-note" id="hoursOut">0.00 hours worked</p>
   </div>
 
-  <script>
-    const target = new Date('2026-04-17T16:00:00');
+  <button id="resetBtn">Reset</button>
+</div>
 
-    const daysEl     = document.getElementById('days');
-    const hoursEl    = document.getElementById('hours');
-    const minutesEl  = document.getElementById('minutes');
-    const secondsEl  = document.getElementById('seconds');
+<script>
+  const RATE = 13.50;
+  const SS_RATE = 0.062;
+  const MEDICARE_RATE = 0.014;
+  const btn = document.getElementById('clockBtn');
+  const moneyOut = document.getElementById('moneyOut');
+  const hoursOut = document.getElementById('hoursOut');
+  const resetBtn = document.getElementById('resetBtn');
 
-    function pad(n) {
-      return String(Math.floor(n)).padStart(2, '0');
+  let startTime = null;
+  let intervalId = null;
+  let elapsedBeforePause = 0; // seconds accumulated from previous sessions this "shift"
+
+  function tick() {
+    const elapsedSeconds = elapsedBeforePause + (Date.now() - startTime) / 1000;
+    const gross = (elapsedSeconds / 3600) * RATE;
+    const net = gross * (1 - SS_RATE - MEDICARE_RATE);
+    moneyOut.textContent = '$' + net.toFixed(2);
+    hoursOut.textContent = (elapsedSeconds / 3600).toFixed(2) + ' hours worked';
+  }
+
+  function updateResetVisibility() {
+    const earned = parseFloat(moneyOut.textContent.replace('$', ''));
+    resetBtn.disabled = !!intervalId || earned === 0;
+  }
+
+  btn.addEventListener('click', () => {
+    if (!intervalId) {
+      // Clock in
+      startTime = Date.now();
+      intervalId = setInterval(tick, 250);
+      btn.textContent = 'Clock out';
+      btn.classList.add('active');
+    } else {
+      // Clock out
+      elapsedBeforePause += (Date.now() - startTime) / 1000;
+      clearInterval(intervalId);
+      intervalId = null;
+      btn.textContent = 'Clock in';
+      btn.classList.remove('active');
     }
+    updateResetVisibility();
+  });
 
-    function animateFlip(el, newVal) {
-      if (el.textContent !== newVal) {
-        el.textContent = newVal;
-        el.classList.remove('flip');
-        void el.offsetWidth; // reflow
-        el.classList.add('flip');
-      }
-    }
+  resetBtn.addEventListener('click', () => {
+    elapsedBeforePause = 0;
+    moneyOut.textContent = '$0.00';
+    hoursOut.textContent = '0.00 hours worked';
+    updateResetVisibility();
+  });
 
-    function update() {
-      const now  = new Date();
-      const diff = target - now;
+  updateResetVisibility();
+</script>
 
-      if (diff <= 0) {
-        document.getElementById('countdown').innerHTML =
-          '<p class="expired-msg">🎉 The moment has arrived!</p>';
-        return;
-      }
 
-      const totalSeconds = Math.floor(diff / 1000);
-      const days    = Math.floor(totalSeconds / 86400);
-      const hours   = Math.floor((totalSeconds % 86400) / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
 
-      animateFlip(daysEl,    pad(days));
-      animateFlip(hoursEl,   pad(hours));
-      animateFlip(minutesEl, pad(minutes));
-      animateFlip(secondsEl, pad(seconds));
-    }
-
-    update();
-    setInterval(update, 1000);
-  </script>
-</body>
-</html>
+</body></html>
