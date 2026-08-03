@@ -5,10 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="Clock Tracker">
+<meta name="apple-mobile-web-app-title" content="Earnings">
 <title>Earnings</title>
 <style>
   * { box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background: #f4f4f2;
@@ -193,6 +198,8 @@
     saveState();
     render();
   });
+
+  document.body.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
 
   // Recompute immediately whenever the tab/app becomes visible again,
   // in case background timers were paused by the OS.
